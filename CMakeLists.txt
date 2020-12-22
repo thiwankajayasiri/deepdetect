@@ -688,13 +688,22 @@ if (USE_NCNN)
   message(STATUS "Configuring NCNN")
   add_definitions(-DUSE_NCNN)
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  set(NCNN_PATCHES_PATH ${CMAKE_BINARY_DIR}/patches/ncnn)
+  set(NCNN_PATCHES
+    ${NCNN_PATCHES_PATH}/ncnn_inner_keep_h.patch
+    ${NCNN_PATCHES_PATH}/ncnn_lstm_cont.patch
+    ${NCNN_PATCHES_PATH}/ncnn_variable_h.patch
+    )
+  set(NCNN_COMPLETE ${CMAKE_BINARY_DIR}/CMakeFiles/ncnn-complete)
+
   set(NCNN_LIB_DEPS ${CMAKE_BINARY_DIR}/ncnn/src/ncnn-build/src/libncnn.a)
   if (RPI3)
     ExternalProject_Add(
       ncnn
       PREFIX ncnn
-      GIT_REPOSITORY https://github.com/jolibrain/ncnn.git
-      CMAKE_ARGS -DPI3=ON -DCMAKE_TOOLCHAIN_FILE=../toolchains/pi3.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DProtobuf_INCLUDE_DIR=${CMAKE_BINARY_DIR}/protobuf/src/protobuf/src -DProtobuf_LIBRARIES=${PROTOBUF_LIB_DIR}/libprotobuf.dylib -DProtobuf_PROTOC_EXECUTABLE=${PROTOBUF_LIB_DIR}/protoc
+      GIT_REPOSITORY https://github.com/tencent/ncnn.git
+      PATCH_COMMAND test -f ${NCNN_COMPLETE} && echo Skipping || git apply ${NCNN_PATCHES} && echo Applying ${NCNN_PATCHES}
+      CMAKE_ARGS -DPI3=ON -DCMAKE_TOOLCHAIN_FILE=../toolchains/pi3.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DProtobuf_INCLUDE_DIR=${CMAKE_BINARY_DIR}/protobuf/src/protobuf/src -DProtobuf_LIBRARIES=${PROTOBUF_LIB_DIR}/libprotobuf.so -DProtobuf_PROTOC_EXECUTABLE=${PROTOBUF_LIB_DIR}/protoc -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_TESTS=OFF
       INSTALL_COMMAND ""
       DEPENDS protobuf
     )

@@ -82,7 +82,10 @@ namespace dd
   NCNNLib<TInputConnectorStrategy, TOutputConnectorStrategy,
           TMLModel>::~NCNNLib()
   {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
     delete _net;
+#pragma GCC diagnostic pop
     _net = nullptr;
   }
 
