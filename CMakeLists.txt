@@ -192,13 +192,15 @@ if (BUILD_SPDLOG)
     ExternalProject_Add(
         spdlog
         PREFIX spdlog
-        URL https://github.com/gabime/spdlog/archive/v1.8.1.tar.gz
-        URL_HASH SHA256=5197b3147cfcfaa67dd564db7b878e4a4b3d9f3443801722b3915cdeced656cb
+        URL https://github.com/gabime/spdlog/archive/v1.8.2.tar.gz
+        URL_HASH SHA256=e20e6bd8f57e866eaf25a5417f0a38a116e537f1a77ac7b5409ca2b180cec0d5
         BUILD_IN_SOURCE true
         #PATCH_COMMAND patch -p1 < ${CMAKE_SOURCE_DIR}/patches/spdlog/1818.patch
         INSTALL_COMMAND ""
     )
     set(SPDLOG_LIB_DEPS ${CMAKE_BINARY_DIR}/spdlog/src/spdlog/libspdlog.a)
+    set(SPDLOG_CAFFE_LIB_DIR ${CMAKE_BINARY_DIR}/spdlog/src/spdlog)
+    set(SPDLOG_CAFFE_LIB_DEPS :libspdlog.a)
     set(SPDLOG_INCLUDE_DIR ${CMAKE_BINARY_DIR}/spdlog/src/spdlog/include)
     include_directories(SYSTEM ${SPDLOG_INCLUDE_DIR})
 endif()
@@ -634,9 +636,10 @@ elseif(USE_CAFFE)
         echo "USE_SYSLOG:=${USE_SYSLOG}" >> Makefile.config &&
         echo "DEBUG:=${CAFFE_DEBUG}" >> Makefile.config &&
         echo "INCLUDE_DIRS+=${SPDLOG_INCLUDE_DIR}" >> Makefile.config &&
-        echo "LIBRARIES+=${SPDLOG_LIB_DEPS}" >> Makefile.config &&
         echo "INCLUDE_DIRS+=${PROTOBUF_INCLUDE_DIR}" >> Makefile.config &&
         echo "CUDA_ARCH:=${CUDA_ARCH}" >> Makefile.config &&
+        echo "LIBRARIES+=${SPDLOG_CAFFE_LIB_DEPS}" >> Makefile.config &&
+        echo "LIBRARY_DIRS+=${SPDLOG_CAFFE_LIB_DIR}" >> Makefile.config &&
         echo "LIBRARY_DIRS+=${PROTOBUF_LIB_DIR}" >> Makefile.config
     BUILD_COMMAND 
         ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${PROTOBUF_LIB_DIR}:$ENV{LD_LIBRARY_PATH} PATH=${PROTOBUF_LIB_DIR}:$ENV{PATH} make -j${N} proto &&
@@ -693,7 +696,10 @@ if (USE_NCNN)
     ${NCNN_PATCHES_PATH}/ncnn_inner_keep_h.patch
     ${NCNN_PATCHES_PATH}/ncnn_lstm_cont.patch
     ${NCNN_PATCHES_PATH}/ncnn_variable_h.patch
+    ${NCNN_PATCHES_PATH}/ncnn_flatten_axis.patch
     )
+
+  set(NCNN_VERSION "20201218")
   set(NCNN_COMPLETE ${CMAKE_BINARY_DIR}/CMakeFiles/ncnn-complete)
 
   set(NCNN_LIB_DEPS ${CMAKE_BINARY_DIR}/ncnn/src/ncnn-build/src/libncnn.a)
@@ -702,8 +708,9 @@ if (USE_NCNN)
       ncnn
       PREFIX ncnn
       GIT_REPOSITORY https://github.com/tencent/ncnn.git
-      GIT_TAG "417b6874f8e96d662f0b58c4e0f76053295b2110"
-      PATCH_COMMAND test -f ${NCNN_COMPLETE} && echo Skipping || git apply ${NCNN_PATCHES} && echo Applying ${NCNN_PATCHES}
+      #PATCH_COMMAND test -f ${NCNN_COMPLETE} && echo Skipping || git apply ${NCNN_PATCHES} && echo Applying ${NCNN_PATCHES}
+      GIT_TAG ${NCNN_VERSION}
+      PATCH_COMMAND git apply ${NCNN_PATCHES} && echo Applying ${NCNN_PATCHES}
       CMAKE_ARGS -DPI3=ON -DCMAKE_TOOLCHAIN_FILE=../toolchains/pi3.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DProtobuf_INCLUDE_DIR=${CMAKE_BINARY_DIR}/protobuf/src/protobuf/src -DProtobuf_LIBRARIES=${PROTOBUF_LIB_DIR}/libprotobuf.so -DProtobuf_PROTOC_EXECUTABLE=${PROTOBUF_LIB_DIR}/protoc -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_BENCHMARK=OFF -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_TESTS=OFF
       INSTALL_COMMAND ""
       DEPENDS protobuf
@@ -728,9 +735,11 @@ if (USE_NCNN)
     ExternalProject_Add(
       ncnn
       PREFIX ncnn
+      #TODO modify patch_command
       PATCH_COMMAND test -f ${NCNN_COMPLETE} && echo Skipping ||  git apply ${NCNN_PATCHES} && echo Applying ${NCNN_PATCHES}
+      #PATCH_COMMAND test -f ${NCNN_COMPLETE} || git apply ${NCNN_PATCHES}
       GIT_REPOSITORY https://github.com/tencent/ncnn.git
-      GIT_TAG "417b6874f8e96d662f0b58c4e0f76053295b2110"
+      GIT_TAG ${NCNN_VERSION}
       CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_PROCESSOR=arm64 -DCMAKE_OSX_ARCHITECTURES=arm64 -DVulkan_INCLUDE_DIR=${CMAKE_BINARY_DIR}/vulkansdk-macos-1.2.162.0/MoltenVK/include -DVulkan_LIBRARY=${CMAKE_BINARY_DIR}/vulkansdk-macos-1.2.162.0/MoltenVK/dylib/macOS/libMoltenVK.dylib -DNCNN_VULKAN=ON -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DProtobuf_INCLUDE_DIR=${CMAKE_BINARY_DIR}/protobuf/src/protobuf/src -DProtobuf_LIBRARIES=${PROTOBUF_LIB_DIR}/libprotobuf.dylib -DProtobuf_PROTOC_EXECUTABLE=${PROTOBUF_LIB_DIR}/protoc -DOpenMP_C_FLAGS="-Xclang -fopenmp" -DOpenMP_CXX_FLAGS="-Xclang -fopenmp" -DOpenMP_C_LIB_NAMES="libomp" -DOpenMP_CXX_LIB_NAMES="libomp" -DOpenMP_libomp_LIBRARY="/opt/homebrew/lib/libomp.a"
       INSTALL_COMMAND ""
       DEPENDS protobuf

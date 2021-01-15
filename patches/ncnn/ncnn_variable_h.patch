@@ -1,5 +1,5 @@
 diff --git a/src/layer.h b/src/layer.h
-index 554f7a8e..766e6366 100644
+index 373f4172..1a663784 100644
 --- a/src/layer.h
 +++ b/src/layer.h
 @@ -48,6 +48,11 @@ public:
@@ -31,7 +31,7 @@ index bd7f31cc..53be06a4 100644
      virtual int forward_inplace(VkMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
      virtual int forward_inplace(VkImageMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
 diff --git a/src/net.h b/src/net.h
-index b78bd05d..5fda22c2 100644
+index a7c05bd0..ec8b8f29 100644
 --- a/src/net.h
 +++ b/src/net.h
 @@ -72,6 +72,11 @@ public:
