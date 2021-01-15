@@ -199,6 +199,7 @@ TEST(ncnnapi, service_predict_classification)
   ASSERT_TRUE(jd["body"]["predictions"][0]["classes"].Size() == 1000);
 }
 
+#ifdef USE_CAFFE
 TEST(ncnnapi, service_lstm)
 {
   // create service
@@ -210,7 +211,7 @@ TEST(ncnnapi, service_lstm)
   mkdir(csvts_repo.c_str(), 0777);
   std::string sname = "my_service_csvts";
   std::string jstr
-      = "{\"mllib\":\"caffe\",\"description\":\"my ts "
+      = "{\"mllib\":\"ncnn\",\"description\":\"my ts "
         "regressor\",\"type\":\"supervised\",\"model\":{\"repository\":\""
         + csvts_repo + "\",\"templates\":\"" + model_templates_repo
         + "\"},\"parameters\":{\"input\":{\"connector\":\"csvts\",\"label\":["
@@ -261,7 +262,7 @@ TEST(ncnnapi, service_lstm)
   std::string jpredictstr
       = "{\"service\":\"" + sname
         + "\",\"parameters\":{\"input\":{\"timesteps\":999,\"connector\":"
-          "\"csvts\",\"scale\":true,\"min_vals\":"
+          "\"caffe\",\"scale\":true,\"min_vals\":"
         + str_min_vals + ",\"max_vals\":" + str_max_vals
         + "},\"output\":{}},\"data\":[\"" + csvts_predict + "\"]}";
   joutstr = japi.jrender(japi.service_predict(jpredictstr));
@@ -320,3 +321,4 @@ TEST(ncnnapi, service_lstm)
   ASSERT_EQ(ok_str, joutstr);
   rmdir(csvts_repo.c_str());
 }
+#endif
